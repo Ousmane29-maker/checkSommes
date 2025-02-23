@@ -1,0 +1,46 @@
+/*styles.css*/
+
+.labelSomme {
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-font-size: 20px;
+}
+
+.buttonEnVert{
+    -fx-background-color: #7AA95C;
+    -fx-font-size: 20px;
+}
+
+.buttonEnVertClair {
+    -fx-background-color: #E2E9C0; /* Couleur de fond (vert pastel clair) */
+    -fx-font-size: 20px; /* Taille du texte */
+}
+
+.buttonEnMarron {
+    -fx-background-color: #955149;
+    -fx-font-size: 20px;
+}
+
+.buttonControle {
+    -fx-background-radius: 15px; /* Arrondi les bords de l'arrière-plan */
+
+}
+
+.historique{
+    -fx-font-family: "Roboto";
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-underline: true;
+
+}
+.historiqueSansAide{
+    -fx-font-size: 20px;
+
+}
+
+.historiqueAidee{
+    -fx-font-size: 20px;
+    -fx-text-fill: #A7001E;
+
+}
+
