@@ -4,6 +4,7 @@ import checkSommes.modele.Jeu;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -18,7 +19,9 @@ public class PanneauControle extends HBox implements Observateur{
     public PanneauControle(Jeu jeu) {
         this.jeu = jeu;
         this.ouiNon = new Button();
+        ouiNon.setTooltip(new Tooltip("Appuyer pour changer de mode"));
         this.help = new Button();
+        help.setTooltip(new Tooltip("Demander de l'aide, coût = 2 vies"));
         Image imageOui = new Image(getClass().getResourceAsStream("/images/oui.png"), 48, 48, true, true);
         this.iconOui = new ImageView(imageOui);
         Image imageNon = new Image(getClass().getResourceAsStream("/images/non.png"), 48, 48, true, true);

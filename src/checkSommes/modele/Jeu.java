@@ -1,7 +1,10 @@
 package checkSommes.modele;
 
 import checkSommes.ig.Observateur;
+import checkSommes.modele.fabrique.FabriquePlateau;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -16,29 +19,47 @@ public class Jeu implements Iterable<Coup>{
     private int colonneCaseAidee;
 
     private Case[][] cases ;
-    private int nbLignes ;
-    private int nbColonnes ;
 
-    private String nomFichier;
 
     private ArrayList<Coup> coups;
 
     private int nbVies;
+
+    private boolean plateauCharge;  // Flag pour savoir si le plateau a changé
+    private int nbDeCaseSolutions; // Nombre total de cases qui sont des solutions
+    private int nbDeCaseChoisis;   // Nombre de cases actuellement choisies
     public Jeu(){
         this.mode = true; // par defaut, le jeu est en mode "Oui"
         this.obs = new ArrayList<>(5);
-        this.nbVies = NB_VIES_INITIAL ; // nombre de vie par defaut
-        this.nomFichier = "jeu1.txt" ;
-        FabriquePlateau fabriquePlateau = new FabriquePlateau(nomFichier);
-        this.nbLignes = fabriquePlateau.getNbLignes() ;
-        this.nbColonnes = fabriquePlateau.getNbColonnes(); ;
-        this.cases = fabriquePlateau.getPlateau() ;
-
-        this.ligneCaseAidee = -1 ;
-        this.colonneCaseAidee = -1 ;
-
         this.coups = new ArrayList<>(5);
+        this.nbVies = NB_VIES_INITIAL ; // nombre de vie par defaut
 
+        initialiserPlateau();
+
+        this.plateauCharge = false;
+    }
+
+    private void initialiserPlateau(){
+        FabriquePlateau fabriquePlateau = FabriquePlateau.getInstance();
+        cases = fabriquePlateau.getPlateauParDefaut();
+        ligneCaseAidee = -1;
+        colonneCaseAidee = -1;
+
+        // Initialisation des compteurs
+        nbDeCaseSolutions = calculerNbDeCaseSolutions();
+        nbDeCaseChoisis = 0;
+    }
+
+    private int calculerNbDeCaseSolutions() {
+        int count = 0;
+        for (Case[] ligne : cases) {
+            for (Case c : ligne) {
+                if (c.estSolution()) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     public boolean enModeOui(){
@@ -50,11 +71,11 @@ public class Jeu implements Iterable<Coup>{
     }
 
     public int getNbLignes(){
-        return nbLignes ;
+        return cases.length ;
     }
 
     public int getNbColonnes(){
-        return nbColonnes ;
+        return cases[0].length ;
     }
 
 
@@ -65,6 +86,14 @@ public class Jeu implements Iterable<Coup>{
     public int getColonneCaseAidee() {
         return colonneCaseAidee;
     }
+    public boolean estPlateauCharge() {
+        return plateauCharge;
+    }
+
+    public void resetPlateauCharge() {
+        plateauCharge = false; // Après avoir réagi, on réinitialise le flag
+    }
+
 
     public void resetCoordCaseAidee(){
         this.ligneCaseAidee = -1 ;
@@ -115,14 +144,15 @@ public class Jeu implements Iterable<Coup>{
     }
 
     public void choisirCase(int ligne, int colonne) {
-
         if(enModeOui()){
             if(!cases[ligne][colonne].estSolution()){
-                //l'utilisateur a choisi la mauvaise case
+                // l'utilisateur a choisi la mauvaise case
+                cases[ligne][colonne].setCouleur(1);
                 if(nbVies > 0){
                     nbVies--;
                 }
             }else {
+                nbDeCaseChoisis = cases[ligne][colonne].getCouleur () != 2 ? nbDeCaseChoisis+1 : nbDeCaseChoisis;
                 cases[ligne][colonne].setChoisie(true);
                 cases[ligne][colonne].setCouleur(2);
                 Coup coup = new Coup(ligne, colonne, sommeLigne(ligne), sommeColonne(colonne), false) ;
@@ -130,6 +160,7 @@ public class Jeu implements Iterable<Coup>{
 
             }
         }else{
+            nbDeCaseChoisis = cases[ligne][colonne].getCouleur () == 2 ? nbDeCaseChoisis-1 : nbDeCaseChoisis;
             cases[ligne][colonne].setChoisie(false);
             cases[ligne][colonne].setCouleur(1);
             Coup coup = new Coup(ligne, colonne, sommeLigne(ligne), sommeColonne(colonne), false) ;
@@ -146,9 +177,9 @@ public class Jeu implements Iterable<Coup>{
         if(nbVies > 0){
             int i = 0;
             boolean find = false;
-            while(i < nbLignes && !find){
+            while(i < getNbLignes() && !find){
                 int j = 0;
-                while(j < nbColonnes && !find){
+                while(j < getNbColonnes() && !find){
                     if(cases[i][j].getCouleur() == 0){
                         if(cases[i][j].estSolution()){
                             cases[i][j].setChoisie(true);
@@ -162,10 +193,7 @@ public class Jeu implements Iterable<Coup>{
                         // ajouter le coup aider
                         Coup coup = new Coup(i, j, sommeLigne(i), sommeColonne(j), true);
                         this.ajouterCoup(coup);
-                        nbVies -=2;
-                        if(nbVies < 0){
-                            nbVies = 0;
-                        }
+                        nbVies = Math.max(nbVies - 2, 0); // jamais negatif
                         notifierObservateurs();
                     }
                     j++;
@@ -178,57 +206,15 @@ public class Jeu implements Iterable<Coup>{
     }
 
     public boolean jeuTermine(){
-        return nbVies == 0 || casesChoisisSontCorrectes();
+        return nbVies == 0 || nbDeCaseChoisis == nbDeCaseSolutions ;
     }
-
-    private boolean casesChoisisSontCorrectes() {
-        boolean correct = true;
-        int i = 0;
-        while (i < nbLignes && correct){
-            if(sommeLigne(i) != sommeLigneChoisie(i)){
-                correct = false;
-            }
-            i++;
-        }
-        i = 0 ;
-        while (i < nbColonnes && correct){
-            if(sommeColonne(i) != sommeColonneeChoisie(i)){
-                correct = false;
-            }
-            i++;
-        }
-        return correct ;
-    }
-
-
-    private int sommeLigneChoisie(int ligne) {
-        int somme = 0;
-        for(int j = 0; j < getNbColonnes(); j++){
-            if(cases[ligne][j].getChoisie()){
-                somme+= getValeur(ligne, j);
-            }
-        }
-        return somme;
-    }
-
-    private int sommeColonneeChoisie(int colonne) {
-        int somme = 0;
-        for(int i = 0; i < getNbLignes(); i++){
-            if(cases[i][colonne].getChoisie()){
-                somme+= getValeur(i, colonne);
-            }
-
-        }
-        return somme;
-    }
-
 
     public void reinitialiser() {
-        FabriquePlateau fabriquePlateau = new FabriquePlateau(nomFichier);
-        cases = fabriquePlateau.getPlateau(); // le plateau de depart
+        resetCases();
         this.nbVies = NB_VIES_INITIAL;
         resetCoordCaseAidee();
         coups.clear();
+        nbDeCaseChoisis = 0;
         notifierObservateurs();
     }
 
@@ -249,5 +235,50 @@ public class Jeu implements Iterable<Coup>{
         return coups.size() ;
     }
 
+    public void ouvrir(File fichier) throws FileNotFoundException, IllegalArgumentException  {
+        FabriquePlateau fabriquePlateau = FabriquePlateau.getInstance();
+        this.cases = fabriquePlateau.getPlateau(fichier);
+        this.ligneCaseAidee = -1;
+        this.colonneCaseAidee = -1;
+        nbDeCaseSolutions = calculerNbDeCaseSolutions();
+        nbDeCaseChoisis = 0;
+        this.nbVies = NB_VIES_INITIAL ;
+        this.coups.clear();
+        this.mode = true;
+        this.plateauCharge = true; // nouveau plateau a ete charge.
+        notifierObservateurs();
+    }
+
+
+    private void resetCases(){
+        for(int i = 0; i < getNbLignes(); i++){
+            for(int j = 0; j < getNbColonnes(); j++){
+                cases[i][j].resetCase();
+            }
+        }
+    }
+
+    public String toString(){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Jeu { \n");
+        stringBuilder.append(" mode = ").append(mode);
+        stringBuilder.append("\n nbLignes = ").append(getNbLignes());
+        stringBuilder.append("\n nbColonnes = ").append(getNbColonnes());
+        stringBuilder.append("\n nbVies =  ").append(nbVies);
+        stringBuilder.append("\n cases { \n") ;
+        for(int i = 0; i < getNbLignes(); i++){
+            for(int j = 0; j < getNbColonnes(); j++){
+                stringBuilder.append("    ");
+                stringBuilder.append(cases[i][j]).append('\n');
+            }
+        }
+        stringBuilder.append(" } \n coups { \n");
+        for(Coup coup : this){
+            stringBuilder.append("    ");
+            stringBuilder.append(coup).append('\n');
+        }
+        stringBuilder.append(" }\n}\n");
+        return stringBuilder.toString();
+    }
 }
 

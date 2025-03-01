@@ -36,4 +36,19 @@ public class Case {
     public int getCouleur() {
         return this.couleur;
     }
+
+    public void resetCase(){
+        this.choisie = false;
+        this.couleur = 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Case{" +
+                "valeur=" + valeur +
+                ", estSolution=" + estSolution +
+                ", choisie=" + choisie +
+                ", couleur=" + couleur +
+                '}';
+    }
 }

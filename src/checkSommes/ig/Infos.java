@@ -49,7 +49,6 @@ public class Infos extends HBox implements Observateur {
                 Label mort = new Label();
                 ImageView iconMort = new ImageView(new Image(getClass().getResourceAsStream("/images/mort.png"), 110, 110, true, true));
                 mort.setGraphic(iconMort);
-                //this.setAlignment(Pos.CENTER);
                 this.getChildren().add(mort);
             }
             afficherDialogue();

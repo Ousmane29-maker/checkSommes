@@ -1,9 +1,6 @@
 package checkSommes;
 
-import checkSommes.ig.Historique;
-import checkSommes.ig.Infos;
-import checkSommes.ig.PanneauControle;
-import checkSommes.ig.PlateauGraphique;
+import checkSommes.ig.*;
 import checkSommes.modele.Jeu;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -20,6 +17,7 @@ public class Main extends Application {
 
         Jeu jeu = new Jeu() ;
         BorderPane root = new BorderPane();
+        root.setTop(new MenuJeu(jeu, primaryStage));
         root.setBottom(new PanneauControle(jeu));
         root.setCenter(new PlateauGraphique(jeu));
         VBox box = new VBox(20) ;
